@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <string.h>
 
 #define ZERO 0x0
 #define MEM_MIN 1024
@@ -37,9 +38,7 @@ struct MemorySegment
 void *addToLinkedList(size_t segmentSize, size_t dataSize);
 void printLinkedList(void);
 void setVerbose(uint8_t oneOrZero);
+void linkedListReset(void);
 
-// // "Private" functions
-// static struct MemorySegment *findAvailableMemory(size_t dataSize);
-// static struct MemorySegment *findLastSegment(void);
 
 #endif //__MEMORYSEGMENT_H
