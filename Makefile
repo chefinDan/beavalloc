@@ -15,11 +15,14 @@ PROG = beavalloc
 
 all: $(PROG)
 
-beavalloc: beavalloc.o main.o
+beavalloc: beavalloc.o memorySegment.o main.o
 	$(CC) $(CFLAGS) -o $@ $^
 	chmod a+rx,g-w $@
 
 beavalloc.o: beavalloc.c beavalloc.h
+	$(CC) $(CFLAGS) -c $<
+
+memorySegment.o: memorySegment.c memorySegment.h
 	$(CC) $(CFLAGS) -c $<
 
 main.o: main.c beavalloc.h
