@@ -6,7 +6,7 @@ static struct MemorySegment *head = 0;
 static void *initialProgramBreak;
 
 // variable to determine verbosity of execution
-uint8_t Verbose = 0;
+uint8_t _Verbose = 0;
 
 static size_t sumAllSegments(void){
     struct MemorySegment *memSegPtr;
@@ -26,7 +26,7 @@ static struct MemorySegment *findAvailableMemory(size_t dataSize)
 {
     struct MemorySegment *memSegPtr;
 
-    Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | Traversing memory segment linked list looking for available memory\n", __FILE__, __LINE__, __FUNCTION__) : 0;
+    _Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | Traversing memory segment linked list looking for available memory\n", __FILE__, __LINE__, __FUNCTION__) : 0;
     memSegPtr = head;
     do
     { // check if the current memSeg has data space for a new linkedList node and the user requested data
@@ -44,7 +44,7 @@ static struct MemorySegment *findAvailableMemory(size_t dataSize)
 static struct MemorySegment *findLastSegment(void)
 {
     struct MemorySegment *memSegPtr;
-    Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Traversing memory segment linked list looking for last segment\n", __FILE__, __LINE__, __FUNCTION__) : 0;
+    _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Traversing memory segment linked list looking for last segment\n", __FILE__, __LINE__, __FUNCTION__) : 0;
 
     memSegPtr = head;
     do
@@ -53,6 +53,7 @@ static struct MemorySegment *findLastSegment(void)
         {
             return memSegPtr;
         }
+        memSegPtr = memSegPtr->next;
     } while (memSegPtr);
 
     return NULL;
@@ -61,7 +62,7 @@ static struct MemorySegment *findLastSegment(void)
 
 void setVerbose(uint8_t oneOrZero)
 {
-    Verbose = oneOrZero;
+    _Verbose = oneOrZero;
 }
 
 
@@ -71,12 +72,12 @@ void *addToLinkedList(size_t segmentSize, size_t dataSize){
     {
         // Start of linked list.
         // Increase heap to include requested memory and MemorySegmentData struct
-        Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | First allocation, initializing head of memory segment linked list\n", __FILE__, __LINE__, __FUNCTION__) : 0;
+        _Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | First allocation, initializing head of memory segment linked list\n", __FILE__, __LINE__, __FUNCTION__) : 0;
         initialProgramBreak = sbrk(ZERO);
-        Verbose ? fprintf(stderr, "    | Saving initial program break: %p\n", initialProgramBreak) : 0;
+        _Verbose ? fprintf(stderr, "    | Saving initial program break: %p\n", initialProgramBreak) : 0;
 
         newMemSeg = (struct MemorySegment*) sbrk(MEM_SEG_INFO + segmentSize);
-        Verbose ? fprintf(stderr, "    | Heap increased by %ld + %ld bytes\n\n", segmentSize, MEM_SEG_INFO) : 0;
+        _Verbose ? fprintf(stderr, "    | Heap increased by %ld + %ld bytes\n\n", segmentSize, MEM_SEG_INFO) : 0;
         newMemSeg->segmentSize = segmentSize;
         newMemSeg->dataSize = dataSize;
         newMemSeg->isFree = 0;
@@ -92,7 +93,7 @@ void *addToLinkedList(size_t segmentSize, size_t dataSize){
 
     if(memSegWithRoom){
         // Found memory segment with room for new data
-        Verbose ? fprintf(stderr, "Line %d: Adding new node to memory segment linked list on existing heap\n", __LINE__): 0;
+        _Verbose ? fprintf(stderr, "Line %d: Adding new node to memory segment linked list on existing heap\n", __LINE__): 0;
         newMemSeg = (memSegWithRoom + 2); // point newMemSegData to end of previous data section
 
         // newMemSeg's segment is the size of the xisting segment minus the existing segment data size
@@ -111,9 +112,9 @@ void *addToLinkedList(size_t segmentSize, size_t dataSize){
     else
     {
         // no room found in existing segments 
-        Verbose ? fprintf(stderr, "Line %d: No space found in exsiting heap, adding new node to memory segment linked list\n", __LINE__): 0;
-        newMemSeg = sbrk(MEM_SEG_INFO + segmentSize);
-        Verbose ? fprintf(stderr, "Line %d: Heap increased by %ld + %ld bytes\n", __LINE__, segmentSize, MEM_SEG_INFO): 0;
+        _Verbose ? fprintf(stderr, "Line %d: No space found in exsiting heap, adding new node to memory segment linked list\n", __LINE__): 0;
+        newMemSeg = (struct MemorySegment*) sbrk(MEM_SEG_INFO + segmentSize);
+        _Verbose ? fprintf(stderr, "Line %d: Heap increased by %ld + %ld bytes\n", __LINE__, segmentSize, MEM_SEG_INFO): 0;
         newMemSeg->segmentSize = segmentSize;
         newMemSeg->dataSize = dataSize;
         newMemSeg->isFree = 0;
@@ -131,7 +132,7 @@ void printLinkedList(void)
     struct MemorySegment *memSegPtr;
     size_t i = 0;
 
-    Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n    | Printing memory segment linked list...\n\n", __FILE__, __LINE__, __FUNCTION__) : 0;
+    _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n    | Printing memory segment linked list...\n\n", __FILE__, __LINE__, __FUNCTION__) : 0;
     memSegPtr = head;
     do
     {
@@ -143,9 +144,9 @@ void printLinkedList(void)
 
 void linkedListReset(void){
     size_t sum = sumAllSegments();
-    Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | Filling %ld bytes with null characters\n", __FILE__, __LINE__, __FUNCTION__, sum): 0;
+    _Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | Filling %ld bytes with null characters\n", __FILE__, __LINE__, __FUNCTION__, sum): 0;
     memset(initialProgramBreak, '\0', sum);
-    Verbose ? fprintf(stderr, "    | Reseting heap back to initial program break: %p\n\n", initialProgramBreak): 0;
+    _Verbose ? fprintf(stderr, "    | Reseting heap back to initial program break: %p\n\n", initialProgramBreak): 0;
     brk(initialProgramBreak);
     head = NULL;
 
