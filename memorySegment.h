@@ -39,6 +39,7 @@ void *addToLinkedList(size_t segmentSize, size_t dataSize);
 void printLinkedList(void);
 void setVerbose(uint8_t oneOrZero);
 void linkedListReset(void);
+void linkedListMarkFree(void*);
 
 
 #endif //__MEMORYSEGMENT_H

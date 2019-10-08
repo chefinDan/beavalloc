@@ -1,10 +1,9 @@
 #include "beavalloc.h"
 #include "memorySegment.h"
 
-uint8_t Verbose = 0;
+static uint8_t Verbose = 0;
 
-void 
-*beavalloc(size_t requestedMemorySize){
+void *beavalloc(size_t requestedMemorySize){
     size_t willAllocateSize;
     void *allocatedMemoryAddr;
 
@@ -44,8 +43,6 @@ void
 
     return allocatedMemoryAddr;
 
-
-
 }
 
 void 
@@ -58,5 +55,19 @@ void
 beavalloc_reset(void){
     Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n", __FILE__, __LINE__, __FUNCTION__): 0;
     linkedListReset();
+}
+
+void
+beavfree(void *ptr){
+    struct MemorySegment *segmentToFree;
+
+    if(!ptr)
+        return;
+
+    segmentToFree = (struct MemorySegment*) ptr;
+
+    linkedListMarkFree(segmentToFree);
+    printLinkedList();
+
 }
 
