@@ -154,6 +154,7 @@ void setVerbose(uint8_t oneOrZero)
 }
 
 
+// returns addr of data portion of memory block
 void *addToLinkedList(size_t segmentSize, size_t dataSize){
     struct MemorySegment *memSegWithRoom = 0;
     if (head == 0)
@@ -334,4 +335,23 @@ void dumpLinkedList(uint leaks_only)
                         "Min heap: %p    Max heap: %p\n",
                 used_blocks, free_blocks, initialProgramBreak, maxProgramBreak);
     }
+}
+
+void *linkedListResize(void *dataAddr, size_t size){
+    struct MemorySegment *segmentToResizeHeader, *newSegmentData;
+    segmentToResizeHeader = (struct MemorySegment *)(dataAddr - sizeof(struct MemorySegment));
+
+    if(segmentToResizeHeader->segmentSize < size){
+        _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Segment %p has isufficient space for resize. Will allocate elsewhere and move data\n", __FILE__, __LINE__, __FUNCTION__, segmentToResizeHeader) : 0;
+        newSegmentData = addToLinkedList(size, size);
+        memcpy(newSegmentData, segmentToResizeHeader +1, segmentToResizeHeader->dataSize);
+        linkedListMarkFree(segmentToResizeHeader +1);
+        return newSegmentData - sizeof(struct MemorySegment);
+    }
+    else{
+        _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Segment %p has room for resize. Will increase data size\n", __FILE__, __LINE__, __FUNCTION__, segmentToResizeHeader) : 0;
+        segmentToResizeHeader->dataSize = size;
+        return dataAddr;
+    }
+    
 }

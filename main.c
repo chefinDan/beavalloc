@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
 
     beavalloc_set_verbose(1);
 
-    array0 = beavalloc(64*sizeof(char));
-    for(i = 0; i<16; ++i){
+    array0 = beavalloc(4096*sizeof(char));
+    for(i = 0; i<64; ++i){
         array0[i] = '!';
     }
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         array1[i] = '!';
     }
 
-    beavfree(array0);
+    // beavfree(array0);
 
     array2 = beavalloc(8 * sizeof(char));
     for (i = 0; i < 8; ++i)
@@ -34,12 +34,16 @@ int main(int argc, char *argv[])
         array2[i] = '!';
     }
 
-    array3 = beavalloc(8 * sizeof(char));
-    for (i = 0; i < 8; ++i)
+    array3 = beavalloc(1024 * sizeof(char));
+    for (i = 0; i < 1023; ++i)
     {
         array3[i] = '!';
     }
+    array3[1023] = '#';
 
+    beavrealloc(array3, 2048);
+
+    printf("%s\n", array3);
     // array4 = beavalloc(1024 * sizeof(char));
     // for (i = 0; i < 1024; ++i)
     // {
@@ -60,7 +64,8 @@ int main(int argc, char *argv[])
     // strcpy(msg2, "Hello World A third time");
     // printf("%s\n", msg2);
 
-    beavalloc_dump(0);
+    // beavalloc_dump(0);
+
 
     beavalloc_reset();
 

@@ -71,8 +71,39 @@ void
 
 }
 
+void 
+*beavrealloc(void *ptr, size_t size){
+    size_t willAllocateSize = 0;
+    void * dataSegPtr;
+    // size must be an integer
+    if(size < 0)
+        return NULL;
+    
+    Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n    | User requests %ld bytes be reallocated\n", __FILE__, __LINE__, __FUNCTION__, size) : 0;
 
+    // if size is 0 and ptr is an addr, equivalent to free(ptr)
+    if(size == 0 && ptr){
+        linkedListMarkFree(ptr);
+    }
 
+    // If requested size is less than MEM_MIN/2, then allocate MEM_MIN, otherwise
+    // allocate size * 2
+    // giving the user at least double what they asked for  
+    willAllocateSize  = ((size / 2) < (MEM_MIN / 2)) ? MEM_MIN : size * 2;
+    Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n    | Will allocate %ld bytes\n", __FILE__, __LINE__, __FUNCTION__, willAllocateSize) : 0;
+    
+    // ptr is null, then function behaves like malloc()
+    if(!ptr){
+        dataSegPtr = beavalloc(willAllocateSize);
+    }
+    else{
+        // resize the linkedList node pointed to by ptr
+        dataSegPtr = linkedListResize(ptr, willAllocateSize);
+    }
+
+    printLinkedList();
+    return dataSegPtr; 
+}
 
 
 
