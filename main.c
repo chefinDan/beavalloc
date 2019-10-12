@@ -1,7 +1,13 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include "beavalloc.h" 
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <stdio.h>
+
+//#define NDEBUG
+#include <assert.h>
+
+#include "beavalloc.h"
 
 int main(int argc, char *argv[])
 {
@@ -20,7 +26,7 @@ int main(int argc, char *argv[])
         array1[i] = '!';
     }
 
-    // beavfree(array0);
+    beavfree(array0);
 
     array2 = beavalloc(8 * sizeof(char));
     for (i = 0; i < 8; ++i)
@@ -53,6 +59,8 @@ int main(int argc, char *argv[])
     // msg2 = beavalloc(25 * sizeof(char));
     // strcpy(msg2, "Hello World A third time");
     // printf("%s\n", msg2);
+
+    beavalloc_dump(0);
 
     beavalloc_reset();
 

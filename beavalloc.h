@@ -1,7 +1,5 @@
 // R. Jesse Chaney
-
 #include <stdint.h>
-#include <sys/types.h>
 
 #ifndef __BEAVALLOC_H
 # define __BEAVALLOC_H

@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include "beavalloc.h"
 #include "memorySegment.h"
 
@@ -27,6 +28,31 @@ void *beavalloc(size_t requestedMemorySize){
     return allocatedMemoryAddr; 
 }
 
+void beavfree(void *ptr)
+{
+    struct MemorySegment *segmentToFree;
+
+    if (!ptr)
+        return;
+
+    segmentToFree = (struct MemorySegment *)ptr;
+
+    linkedListMarkFree(segmentToFree);
+    printLinkedList();
+}
+
+void beavalloc_reset(void)
+{
+    Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n", __FILE__, __LINE__, __FUNCTION__) : 0;
+    linkedListReset();
+}
+
+void 
+beavalloc_set_verbose(uint8_t setting){
+    Verbose = setting;
+    setVerbose(setting);
+}
+
 void
 *beavcalloc(size_t nmemb, size_t size){
     void *allocatedMemoryAddr;
@@ -45,29 +71,12 @@ void
 
 }
 
-void 
-beavalloc_set_verbose(uint8_t setting){
-    Verbose = setting;
-    setVerbose(setting);
+
+
+
+
+
+void beavalloc_dump(uint leaks_only)
+{
+    dumpLinkedList(leaks_only);
 }
-
-void 
-beavalloc_reset(void){
-    Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n", __FILE__, __LINE__, __FUNCTION__): 0;
-    linkedListReset();
-}
-
-void
-beavfree(void *ptr){
-    struct MemorySegment *segmentToFree;
-
-    if(!ptr)
-        return;
-
-    segmentToFree = (struct MemorySegment*) ptr;
-
-    linkedListMarkFree(segmentToFree);
-    printLinkedList();
-
-}
-

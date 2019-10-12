@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/types.h>
 
 #define ZERO 0x0
 #define MEM_MIN 1024
@@ -40,6 +41,6 @@ void printLinkedList(void);
 void setVerbose(uint8_t oneOrZero);
 void linkedListReset(void);
 void linkedListMarkFree(void*);
-
+void dumpLinkedList(uint leaks_only);
 
 #endif //__MEMORYSEGMENT_H

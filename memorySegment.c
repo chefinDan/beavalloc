@@ -5,6 +5,7 @@ static struct MemorySegment *head = 0;
 
 // variable to hold program break address when program is first run
 static void *initialProgramBreak;
+static void *maxProgramBreak;
 
 // variable to determine verbosity of execution
 static uint8_t _Verbose = 0;
@@ -39,10 +40,10 @@ static struct MemorySegment *findFirstAvailableMemory(size_t dataSize)
             return memSegPtr; //return address of segment that has room for new data
         }
 
-        if (memSegPtr->isFree && memSegPtr->segmentSize >= dataSize){
-            replaceSegment = 1;
-            return memSegPtr; //return address of segment that has room for new data
-        }
+        // if (memSegPtr->isFree && memSegPtr->segmentSize >= dataSize){
+        //     replaceSegment = 1;
+        //     return memSegPtr; //return address of segment that has room for new data
+        // }
 
             memSegPtr = memSegPtr->next;
     } while (memSegPtr);
@@ -253,5 +254,84 @@ void linkedListMarkFree(void *addr){
                 joinSegments(memSegPtr, next);
             }
         }
+    }
+}
+
+void dumpLinkedList(uint leaks_only)
+{
+    struct MemorySegment *curr = NULL;
+    uint i = 0;
+    uint leak_count = 0;
+    uint user_bytes = 0;
+    uint capacity_bytes = 0;
+    uint block_bytes = 0;
+    uint used_blocks = 0;
+    uint free_blocks = 0;
+
+
+    /*** fix later ***/
+    maxProgramBreak = NULL;
+    /******************/
+
+    if (leaks_only)
+    {
+        fprintf(stderr, "heap lost blocks\n");
+    }
+    else
+    {
+        fprintf(stderr, "heap map\n");
+    }
+    fprintf(stderr, "  %s\t%s\t%s\t%s\t%s"
+                    "\t%s\t%s\t%s\t%s\t%s\t%s"
+                    "\n",
+            "blk no  ", "block add ", "next add  ", "prev add  ", "data add  "
+
+            ,
+            "blk off  ", "dat off  ", "capacity ", "size     ", "blk size ", "status   ");
+    for (curr = head, i = 0; curr != NULL; curr = curr->next, i++)
+    {
+        if (leaks_only == 0 || (leaks_only == 1 && curr->isFree == 0))
+        {
+            fprintf(stderr, "  %u\t\t%9p\t%9p\t%9p\t%9p\t%u\t\t%u\t\t"
+                            "%u\t\t%u\t\t%u\t\t%s\t%c\n",
+                    i, curr, curr->next, curr->prev, curr +1, (unsigned)((void *)curr - initialProgramBreak), (unsigned)((void *)curr->dataSize - initialProgramBreak), (unsigned)curr->segmentSize, (unsigned)curr->dataSize, (unsigned)(curr->segmentSize + sizeof(struct MemorySegment)), curr->isFree ? "free  " : "in use", curr->isFree ? '*' : ' ');
+            user_bytes += curr->dataSize;
+            capacity_bytes += curr->segmentSize;
+            block_bytes += curr->segmentSize + sizeof(struct MemorySegment);
+            if (curr->isFree == 0 && leaks_only == 1)
+            {
+                leak_count++;
+            }
+            if (curr->isFree == 1)
+            {
+                free_blocks++;
+            }
+            else
+            {
+                used_blocks++;
+            }
+        }
+    }
+    if (leaks_only)
+    {
+        if (leak_count == 0)
+        {
+            fprintf(stderr, "  *** No leaks found!!! That does NOT mean no leaks are possible. ***\n");
+        }
+        else
+        {
+            fprintf(stderr, "  %s\t\t\t\t\t\t\t\t\t\t\t\t"
+                            "%u\t\t%u\t\t%u\n",
+                    "Total bytes lost", capacity_bytes, user_bytes, block_bytes);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "  %s\t\t\t\t\t\t\t\t\t\t\t\t"
+                        "%u\t\t%u\t\t%u\n",
+                "Total bytes used", capacity_bytes, user_bytes, block_bytes);
+        fprintf(stderr, "  Used blocks: %u  Free blocks: %u  "
+                        "Min heap: %p    Max heap: %p\n",
+                used_blocks, free_blocks, initialProgramBreak, maxProgramBreak);
     }
 }
