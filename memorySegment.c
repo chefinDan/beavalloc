@@ -3,10 +3,14 @@
 // variable that represents the head of the linked list
 static struct MemorySegment *head = 0;
 
+// variable to hold program break address when program is first run
 static void *initialProgramBreak;
 
 // variable to determine verbosity of execution
 static uint8_t _Verbose = 0;
+
+// flag to indicate that the segment data is free and can be directly replaced
+static uint8_t replaceSegment = 0; 
 
 static size_t sumAllSegments(void){
     struct MemorySegment *memSegPtr;
@@ -29,13 +33,18 @@ static struct MemorySegment *findFirstAvailableMemory(size_t dataSize)
     _Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | Traversing memory segment linked list looking for available memory\n", __FILE__, __LINE__, __FUNCTION__) : 0;
     memSegPtr = head;
     do
-    { // check if the current memSeg has data space for a new linkedList node and the user requested data
-        if ((memSegPtr->segmentSize - memSegPtr->dataSize) > (dataSize + MEM_SEG_INFO))
+    { // check if the current memSeg is free and has data space for a new linkedList node and the user requested data
+        if ((memSegPtr->segmentSize - memSegPtr->dataSize) >= (dataSize + MEM_SEG_INFO))
         {
             return memSegPtr; //return address of segment that has room for new data
         }
 
-        memSegPtr = memSegPtr->next;
+        if (memSegPtr->isFree && memSegPtr->segmentSize >= dataSize){
+            replaceSegment = 1;
+            return memSegPtr; //return address of segment that has room for new data
+        }
+
+            memSegPtr = memSegPtr->next;
     } while (memSegPtr);
 
     return NULL;
@@ -70,7 +79,18 @@ static struct MemorySegment *createLinkedListHead(size_t segmentSize, size_t dat
     return newMemSeg + 1; // return address to beginning of data section of new memorysegment on heap
 }
 
-static struct MemorySegment *splitMemorySegment(struct MemorySegment *memSegWithRoom, size_t segmentSize, size_t dataSize){
+static struct MemorySegment 
+*replaceMemorySegment(struct MemorySegment *freedMemorySegment, size_t dataSize){
+    _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n    | Replacing freed memory at %p.\n\n", __FILE__, __LINE__, __FUNCTION__, freedMemorySegment) : 0;
+    freedMemorySegment->dataSize = dataSize;
+    freedMemorySegment->isFree = 0;
+    replaceSegment = 0;
+    return freedMemorySegment +1;
+}
+
+static struct MemorySegment 
+*splitMemorySegment(struct MemorySegment *memSegWithRoom, size_t segmentSize, size_t dataSize)
+{
     struct MemorySegment *newMemSeg = 0;
 
     // Found memory segment with room for new data
@@ -109,20 +129,21 @@ static struct MemorySegment *addNewSegment(size_t segmentSize, size_t dataSize){
     return newMemSeg +1;
 }
 
+// segB is joined into segA. segA has it's segment size increased by segB's segment size. 
 static struct MemorySegment *joinSegments(struct MemorySegment *segA, struct MemorySegment *segB){
-    struct MemorySegment *segPtr;
-    // point (segment after segB_->prev to segA->prev
-    (segB->next)->prev = segA->prev;
     // point segA next to segB next 
-    (segA->prev)->next = segB->next;
+    segA->next = segB->next;
+    //
+    if(segB->next)
+        (segB->next)->prev = segA;
 
     // add segB segment size to segA's segment size
-    (segA->prev)->segmentSize = (segA->prev)->segmentSize + segA->segmentSize + segB->segmentSize;
-    segPtr = segA->prev;
+    segA->segmentSize = segA->segmentSize + segB->segmentSize;
+    // segPtr = segA->prev;
     segB = NULL;
-    segA = NULL;
+    // segA = NULL;
 
-    return segPtr;
+    return segA;
 }
 
 
@@ -145,6 +166,11 @@ void *addToLinkedList(size_t segmentSize, size_t dataSize){
     // first look for a node with available memory
     memSegWithRoom = findFirstAvailableMemory(dataSize);
 
+    if(memSegWithRoom && replaceSegment){
+        // An existing segment was freed and has room for the requested memory, 
+        // replace the data and update the header data
+        return replaceMemorySegment(memSegWithRoom, dataSize);
+    }
     if(memSegWithRoom){
         // An existing segment has room for the requested memory, split the segment and return the addr.
         return splitMemorySegment(memSegWithRoom, segmentSize, dataSize);
@@ -180,34 +206,51 @@ void linkedListReset(void){
 }
 
 void linkedListMarkFree(void *addr){
-    struct MemorySegment *memSegPtr, *segmentToFree;
+    struct MemorySegment *memSegPtr, *segmentToFree, *next, *prev;
+    int freePrev, freeNext;
 
     segmentToFree = (struct MemorySegment*) (addr - sizeof(struct MemorySegment));
 
     _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Attempting to free memory addr: %p\n", __FILE__, __LINE__, __FUNCTION__, addr) : 0;
     _Verbose ? fprintf(stderr, "   | Header addr: %p\n", segmentToFree) : 0;
 
-    for (memSegPtr = head; memSegPtr->next; memSegPtr = memSegPtr->next)
+    for (memSegPtr = head; memSegPtr; memSegPtr = memSegPtr->next)
     {
+        prev = NULL;
+        next = NULL;
+        freePrev = 0;
+        freeNext = 0;
+
+        // printf("=== %p\n", memSegPtr);
         if (memSegPtr == segmentToFree){
             _Verbose ? fprintf(stderr, "   | Marking addr %p as free\n", memSegPtr) : 0;
             memSegPtr->isFree = 1;
             
-            if( (memSegPtr->prev)->isFree == 1 && (memSegPtr->next)->isFree ){
-                _Verbose ? fprintf(stderr, "   | Joining 3 consecutive segments: %p, %p, %p \n\n", memSegPtr->prev, memSegPtr, memSegPtr->next) : 0;
+            if(memSegPtr->next)
+                next = memSegPtr->next;
+            if(memSegPtr->prev)
+                prev = memSegPtr->prev;
+            
+            if(prev && prev->isFree)
+                freePrev = 1;
+            if(next && next->isFree)
+                freeNext =1;
+
+            if(freePrev && freeNext){
+                _Verbose ? fprintf(stderr, "   | Joining 3 consecutive segments: %p, %p, %p \n\n", prev, memSegPtr, next) : 0;
                 // free 3 segments, middle, prev and next
-                joinSegments(memSegPtr->prev, memSegPtr);
-                joinSegments(memSegPtr->prev, memSegPtr->next);
+                joinSegments(prev, memSegPtr);
+                joinSegments(prev, next);
             }
-            else if ((memSegPtr->prev)->isFree ){
-                _Verbose ? fprintf(stderr, "   | Joining 2 consecutive segments: %p, %p \n\n", memSegPtr->prev, memSegPtr) : 0;
+            else if (freePrev){
+                _Verbose ? fprintf(stderr, "   | Joining 2 consecutive segments, prev and selected: %p, %p \n\n", prev, memSegPtr) : 0;
                 // free 2 segments, middle and prev
-                joinSegments(memSegPtr->prev, memSegPtr);
+                joinSegments(prev, memSegPtr);
             }
-            else if((memSegPtr->next)->isFree){
-                _Verbose ? fprintf(stderr, "   | Joining 2 consecutive segments: %p, %p \n\n", memSegPtr, memSegPtr->next) : 0;
+            else if(freeNext){
+                _Verbose ? fprintf(stderr, "   | Joining 2 consecutive segments, selected and next: %p, %p \n\n", memSegPtr, next) : 0;
                 // free 2 segments, middle and next 
-                joinSegments(memSegPtr, memSegPtr->next);
+                joinSegments(memSegPtr, next);
             }
         }
     }
