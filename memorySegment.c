@@ -1,7 +1,9 @@
 #include "memorySegment.h"
 
-// variable that represents the head of the linked list
+// variables that represent the head and tail of the linked list
 static struct MemorySegment *head = 0;
+static struct MemorySegment *tail =0;
+
 
 // variable to hold program break address when program is first run
 static void *initialProgramBreak;
@@ -55,7 +57,6 @@ static struct MemorySegment *findLastSegment(void)
 {
     struct MemorySegment *memSegPtr;
     _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Traversing memory segment linked list looking for last segment\n", __FILE__, __LINE__, __FUNCTION__) : 0;
-
     for(memSegPtr=head; memSegPtr->next; memSegPtr=memSegPtr->next){}
     return memSegPtr;
 }
@@ -77,6 +78,7 @@ static struct MemorySegment *createLinkedListHead(size_t segmentSize, size_t dat
     newMemSeg->next = 0;
     newMemSeg->prev = 0;
     head = newMemSeg;
+    tail = newMemSeg;
     return newMemSeg + 1; // return address to beginning of data section of new memorysegment on heap
 }
 
@@ -124,8 +126,9 @@ static struct MemorySegment *addNewSegment(size_t segmentSize, size_t dataSize){
     newMemSeg->dataSize = dataSize;
     newMemSeg->isFree = 0;
     newMemSeg->next = NULL;
-    newMemSeg->prev = findLastSegment();
+    newMemSeg->prev = tail;
     (newMemSeg->prev)->next = newMemSeg;
+    tail = newMemSeg;
 
     return newMemSeg +1;
 }
@@ -198,12 +201,13 @@ void printLinkedList(void)
 }
 
 void linkedListReset(void){
-    size_t sum = sumAllSegments();
-    _Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | Filling %ld bytes with null characters\n", __FILE__, __LINE__, __FUNCTION__, sum): 0;
-    memset(initialProgramBreak, '\0', sum);
+    // size_t sum = sumAllSegments();
+    // _Verbose ? fprintf(stderr, "--> %s:%d, in %s()\n    | Filling %ld bytes with null characters\n", __FILE__, __LINE__, __FUNCTION__, sum): 0;
+    // memset(initialProgramBreak, '\0', sum);
     _Verbose ? fprintf(stderr, "    | Reseting heap back to initial program break: %p\n\n", initialProgramBreak): 0;
     brk(initialProgramBreak);
     head = NULL;
+    tail = NULL;
 
 }
 
@@ -344,7 +348,7 @@ void *linkedListResize(void *dataAddr, size_t size){
     if(segmentToResizeHeader->segmentSize < size){
         _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Segment %p has isufficient space for resize. Will allocate elsewhere and move data\n", __FILE__, __LINE__, __FUNCTION__, segmentToResizeHeader) : 0;
         newSegmentData = addToLinkedList(size, size);
-        memcpy(newSegmentData, segmentToResizeHeader +1, segmentToResizeHeader->dataSize);
+        memcpy(newSegmentData, segmentToResizeHeader +1, segmentToResizeHeader->segmentSize);
         linkedListMarkFree(segmentToResizeHeader +1);
         return newSegmentData - sizeof(struct MemorySegment);
     }

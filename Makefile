@@ -36,7 +36,7 @@ tar: clean
 
 # clean up the compiled files and editor chaff
 clean cls:
-	rm -f $(PROG) *.o *~ \#*
+	rm -f $(PROG) *.o *~ \#* *.log
 
 ci:
 	ci -m"auto-checkin" -l *.[ch] ?akefile

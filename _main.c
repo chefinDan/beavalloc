@@ -160,7 +160,7 @@ void run_tests(void)
 
         beavalloc_reset();
         ptr1 = sbrk(0);
-        assert(ptr1 == base);
+        assert(ptr1 == 0);
         fprintf(stderr, "*** End %d\n", 4);
     }
 

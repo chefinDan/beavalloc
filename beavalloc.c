@@ -23,7 +23,7 @@ void *beavalloc(size_t requestedMemorySize){
     willAllocateSize = (requestedMemorySize < MEM_MIN) ? MEM_MIN : requestedMemorySize;
 
     allocatedMemoryAddr = addToLinkedList(willAllocateSize, requestedMemorySize);
-    printLinkedList();
+    Verbose ? printLinkedList(): 0;
 
     return allocatedMemoryAddr; 
 }
@@ -38,7 +38,7 @@ void beavfree(void *ptr)
     segmentToFree = (struct MemorySegment *)ptr;
 
     linkedListMarkFree(segmentToFree);
-    printLinkedList();
+    Verbose ? printLinkedList() : 0;
 }
 
 void beavalloc_reset(void)
@@ -101,7 +101,7 @@ void
         dataSegPtr = linkedListResize(ptr, willAllocateSize);
     }
 
-    printLinkedList();
+    Verbose ? printLinkedList() : 0;
     return dataSegPtr; 
 }
 
