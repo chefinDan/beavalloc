@@ -15,20 +15,6 @@ static uint8_t _Verbose = 0;
 // flag to indicate that the segment data is free and can be directly replaced
 static uint8_t replaceSegment = 0; 
 
-static size_t sumAllSegments(void){
-    struct MemorySegment *memSegPtr;
-    size_t sum = 0;
-
-    memSegPtr = head;
-    do
-    { 
-        sum += memSegPtr->segmentSize;
-        memSegPtr = memSegPtr->next;
-    } while (memSegPtr);
-
-    return sum;
-}
-
 static struct MemorySegment *findFirstAvailableMemory(size_t dataSize)
 {
     struct MemorySegment *memSegPtr;
@@ -51,14 +37,6 @@ static struct MemorySegment *findFirstAvailableMemory(size_t dataSize)
     } while (memSegPtr);
 
     return NULL;
-}
-
-static struct MemorySegment *findLastSegment(void)
-{
-    struct MemorySegment *memSegPtr;
-    _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Traversing memory segment linked list looking for last segment\n", __FILE__, __LINE__, __FUNCTION__) : 0;
-    for(memSegPtr=head; memSegPtr->next; memSegPtr=memSegPtr->next){}
-    return memSegPtr;
 }
 
 static struct MemorySegment *createLinkedListHead(size_t segmentSize, size_t dataSize){
