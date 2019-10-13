@@ -25,7 +25,7 @@ void run_tests(void);
 
 int main(int argc, char **argv)
 {
-    uint8_t isVerbose = FALSE;
+    uint8_t isVerbose = TRUE;
     {
         int opt = -1;
 

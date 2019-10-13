@@ -42,6 +42,6 @@ void setVerbose(uint8_t oneOrZero);
 void linkedListReset(void);
 void linkedListMarkFree(void*);
 void dumpLinkedList(uint leaks_only);
-void *linkedListResize(void *ptr, size_t willAllocateSize);
+void *linkedListResize(void *ptr, size_t willAllocateSize, size_t size);
 
 #endif //__MEMORYSEGMENT_H

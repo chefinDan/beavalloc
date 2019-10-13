@@ -89,16 +89,17 @@ void
     // If requested size is less than MEM_MIN/2, then allocate MEM_MIN, otherwise
     // allocate size * 2
     // giving the user at least double what they asked for  
-    willAllocateSize  = ((size / 2) < (MEM_MIN / 2)) ? MEM_MIN : size * 2;
+    willAllocateSize  = size < MEM_MIN ? MEM_MIN *2 : size * 2;
     Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n    | Will allocate %ld bytes\n", __FILE__, __LINE__, __FUNCTION__, willAllocateSize) : 0;
     
     // ptr is null, then function behaves like malloc()
     if(!ptr){
-        dataSegPtr = beavalloc(willAllocateSize);
+        dataSegPtr = addToLinkedList(willAllocateSize, size);
+        // printLinkedList();
     }
     else{
         // resize the linkedList node pointed to by ptr
-        dataSegPtr = linkedListResize(ptr, willAllocateSize);
+        dataSegPtr = linkedListResize(ptr, willAllocateSize, size);
     }
 
     Verbose ? printLinkedList() : 0;

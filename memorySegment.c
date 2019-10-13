@@ -293,6 +293,7 @@ void dumpLinkedList(uint leaks_only)
 
             ,
             "blk off  ", "dat off  ", "capacity ", "size     ", "blk size ", "status   ");
+        // printf("\nThis is head: %p\n", head);
     for (curr = head, i = 0; curr != NULL; curr = curr->next, i++)
     {
         if (leaks_only == 0 || (leaks_only == 1 && curr->isFree == 0))
@@ -341,16 +342,16 @@ void dumpLinkedList(uint leaks_only)
     }
 }
 
-void *linkedListResize(void *dataAddr, size_t size){
+void *linkedListResize(void *dataAddr, size_t size, size_t requestedSize){
     struct MemorySegment *segmentToResizeHeader, *newSegmentData;
     segmentToResizeHeader = (struct MemorySegment *)(dataAddr - sizeof(struct MemorySegment));
 
     if(segmentToResizeHeader->segmentSize < size){
         _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Segment %p has isufficient space for resize. Will allocate elsewhere and move data\n", __FILE__, __LINE__, __FUNCTION__, segmentToResizeHeader) : 0;
-        newSegmentData = addToLinkedList(size, size);
-        memcpy(newSegmentData, segmentToResizeHeader +1, segmentToResizeHeader->segmentSize);
+        newSegmentData = addToLinkedList(size, requestedSize);
+        memcpy(newSegmentData, dataAddr, requestedSize);
         linkedListMarkFree(segmentToResizeHeader +1);
-        return newSegmentData - sizeof(struct MemorySegment);
+        return newSegmentData;
     }
     else{
         _Verbose ? fprintf(stderr, "-> %s:%d, in %s()\n   | Segment %p has room for resize. Will increase data size\n", __FILE__, __LINE__, __FUNCTION__, segmentToResizeHeader) : 0;
